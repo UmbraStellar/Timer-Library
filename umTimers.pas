@@ -536,10 +536,9 @@ begin
     if AddingTimerMode = 1 then
       AddTimer := TimerProcessTXT + '    ( + ' + Postfix + ' )';
 
-  if AddTimersToEnd then
-    TimerList.Add('Finish   ░ ' + AddZeroes(TimerList.Count + 1, 2) +' ░    ' + AddTimer)
-  else
-    TimerList.Insert(0,'Finish   ░ ' + AddZeroes(TimerList.Count + 1, 2) +' ░    ' + AddTimer);
+  if AddTimersToEnd
+    then TimerList.Add('Finish   ░ ' + AddZeroes(TimerList.Count + 1, 2) +' ░    ' + AddTimer)
+    else TimerList.Insert(0,'Finish   ░ ' + AddZeroes(TimerList.Count + 1, 2) +' ░    ' + AddTimer);
 
   TimerContinued := TimerNow;
   Process;
@@ -557,14 +556,12 @@ begin
   if Started then exit;
 
   Status := umtStarted;
-
   TimerNow := UnivDateTime2LocalDateTime(DateTime2UnivDateTime(Now));
-  if not isNonStop  then
-  begin
-    TimerStart := TimerNow - (TimerStop - TimerStart);
-  end;
-  TimerContinued := TimerNow;
 
+  if not isNonStop then
+    TimerStart := TimerNow - (TimerStop - TimerStart);
+
+  TimerContinued := TimerNow;
   TimerStartTXT := FormatDateTime(TimeFormat, TimerStart);
   DateStartTXT := GetDatePrefix(TimerStart);
 
@@ -604,8 +601,7 @@ end;
 Function AddZeroes(Num:Integer; Count:Byte): String;
 Begin
   Result := IntToStr(Num);
-  While Length(Result) < count Do
-    Result := '0' + Result;
+  While Length(Result) < count Do Result := '0' + Result;
 End;
 
 initialization
