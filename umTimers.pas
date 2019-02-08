@@ -23,7 +23,7 @@
 
 unit umTimers;
 interface
-uses System.SysUtils, System.DateUtils, umStrings, vcl.Dialogs, System.Classes;
+uses System.SysUtils, System.DateUtils, umStrings, System.Classes;
 
 Type
   TumTimerStatus = (umtStarted, umtPaused);
@@ -168,7 +168,7 @@ begin
   inherited Destroy;
 end;
 
-// Быстрое определение длительности таймера с его остановкой
+// Ленивое определение длительности таймера с его остановкой
 function TumTimer.GetProcessDurationStop:String;
 begin
   Process;
@@ -176,7 +176,7 @@ begin
   Result := TimerProcessTXT;
 end;
 
-// Быстрое определение длительности таймера без его остановки
+// Ленивое определение длительности таймера без его остановки
 function TumTimer.GetProcessDurationNonStop:String;
 begin
   Process;
@@ -203,20 +203,18 @@ begin
 
   TimerNow := UnivDateTime2LocalDateTime(DateTime2UnivDateTime(Now));
 
-  if DevidersCount = 0 then
-    TimerParams.PSTR := floattostr(TimerNow) + '|' + floattostr(TimerNow) + '|'
-                      + floattostr(TimerNow) + '|' + floattostr(TimerNow) + '|'
-                      + floattostr(TimerNow) + '';
+  case DevidersCount of
+    0: TimerParams.PSTR := floattostr(TimerNow) + '|' + floattostr(TimerNow) + '|'
+                         + floattostr(TimerNow) + '|' + floattostr(TimerNow) + '|'
+                         + floattostr(TimerNow) + '';
 
-  if DevidersCount = 1 then
-    TimerParams.PSTR := TimerParams.PSTR + '|' + floattostr(TimerNow) + '|'
-                      + floattostr(TimerNow)+'|'+floattostr(TimerNow);
+    1: TimerParams.PSTR := TimerParams.PSTR + '|' + floattostr(TimerNow) + '|'
+                         + floattostr(TimerNow) + '|' + floattostr(TimerNow);
 
-  if DevidersCount = 2 then
-    TimerParams.PSTR := TimerParams.PSTR+'|1|0';
+    2: TimerParams.PSTR := TimerParams.PSTR+'|1|0';
 
-  if DevidersCount = 3 then
-    TimerParams.PSTR := TimerParams.PSTR+'|0';
+    3: TimerParams.PSTR := TimerParams.PSTR+'|0';
+  end;
 
   CreatedTM := TimerParams.CutFirstFloat;
   StartTM := TimerParams.CutFirstFloat;
@@ -237,8 +235,8 @@ begin
 
   TimerNow := UnivDateTime2LocalDateTime(DateTime2UnivDateTime(Now));
   TimerCreated := ATimerCreated;
-  TimerCreatedTXT:=FormatDateTime(TimeFormat,TimerCreated);
-  DateCreatedTXT:=GetDatePrefix(TimerCreated);
+  TimerCreatedTXT := FormatDateTime(TimeFormat,TimerCreated);
+  DateCreatedTXT := GetDatePrefix(TimerCreated);
 
   TimerStart := ATimerStart;
   TimerStop := ATimerStop;
@@ -269,7 +267,7 @@ begin
   AFormat := trim(lowercase(AFormat, loUserLocale));
 
   if (pos('.zz',AFormat)>0) and (pos('.zzz',AFormat) = 0) then
-    AFormat := StringReplace(AFormat,'.zz','.zzz',[rfReplaceAll]);
+    AFormat := StringReplace(AFormat,'.zz','.zzz',[rfReplaceAll]) else
 
   if (pos('.z',AFormat)>0) and (pos('.zzz',AFormat) = 0) then
     AFormat := StringReplace(AFormat,'.z','.zzz',[rfReplaceAll]);
@@ -283,16 +281,15 @@ begin
   if (pos('h',AFormat)>0) and (pos('hh',AFormat) = 0) then
     AFormat := StringReplace(AFormat,'h','hh',[rfReplaceAll]);
 
-  if (AFormat = 'hh:nn:ss.zzz') or
-     (AFormat = 'nn:ss.zzz') or
-     (AFormat = 'ss.zzz') or
-     (AFormat = 'nn:ss') or
-     (AFormat = 'ss') or
-     (AFormat = 'hh:nn:ss') then TimeFormat := AFormat else TimeFormat := 'hh:nn:ss.zzz';
+  if (AFormat = 'hh:nn:ss.zzz') or (AFormat = 'nn:ss.zzz') or
+     (AFormat = 'ss.zzz') or (AFormat = 'nn:ss') or (AFormat = 'ss') or
+     (AFormat = 'hh:nn:ss')
+    then TimeFormat := AFormat
+    else TimeFormat := 'hh:nn:ss.zzz';
 
-  TimerStartTXT := FormatDateTime(TimeFormat,TimerStart);
-  TimerStopTXT := FormatDateTime(TimeFormat,TimerStop);
-  TimerCreatedTXT := FormatDateTime(TimeFormat,TimerCreated);
+  TimerStartTXT := FormatDateTime(TimeFormat, TimerStart);
+  TimerStopTXT := FormatDateTime(TimeFormat, TimerStop);
+  TimerCreatedTXT := FormatDateTime(TimeFormat, TimerCreated);
 
   Process;
 end;
@@ -304,23 +301,17 @@ begin
   AFormat := trim(lowercase(AFormat, loUserLocale));
   DateFormatOrder := 0;
 
-  if AFormat='' then
-  begin
-    DateDevider := '';
-  end else
-  if pos('/',AFormat)>0 then
-  begin
-    DateDevider := '\';
-    AFormat := stringreplace(AFormat,'/','\',[rfReplaceAll]);
-  end else
-  if pos('.',AFormat)>0 then
-  begin
-    DateDevider := '.';
-  end else
-  if pos('\',AFormat)>0 then
-  begin
-    DateDevider := '\';
-  end;
+  if AFormat='' then DateDevider := ''
+  else
+    if pos('/',AFormat)>0 then
+    begin
+      DateDevider := '\';
+      AFormat := stringreplace(AFormat, '/','\', [rfReplaceAll]);
+    end
+  else
+    if pos('.',AFormat)>0 then DateDevider := '.'
+  else
+    if pos('\',AFormat)>0 then DateDevider := '\';
 
   if AFormat<>'' then
   begin
@@ -328,13 +319,13 @@ begin
     if AFormat[1] = 'm' then DateFormatOrder := 2;
   end;
 
-  if (AFormat = 'dddd d mmmm yyyy') or
-     (AFormat = 'ddd d mmm yyyy') or
-     (AFormat = 'mm.dd.yyyy') or
-     (AFormat = 'mm\dd\yyyy') or
-     (AFormat = 'dd.mm.yyyy') or
-     (AFormat = 'dd\mm\yyyy') or
-     (AFormat = '') then DateFormat := AFormat else DateFormat := 'dddd d mmmm yyyy';
+  if (AFormat = 'dddd d mmmm yyyy') or (AFormat = 'ddd d mmm yyyy') or
+     (AFormat = 'mm.dd.yyyy') or (AFormat = 'mm\dd\yyyy') or
+     (AFormat = 'dd.mm.yyyy') or (AFormat = 'dd\mm\yyyy') or (AFormat = '')
+  then
+     DateFormat := AFormat
+  else
+    DateFormat := 'dddd d mmmm yyyy';
 
   DateStartTXT := GetDatePrefix(TimerStart);
   DateStopTXT := GetDatePrefix(TimerStop);
@@ -346,21 +337,21 @@ end;
 // Вычисление интервала между таймерами
 Procedure TUmIntervalBetween.CalcBetween(const ANow, AThen: TDateTime);
 begin
-  MilliSeconds := MilliSecondsBetween(ANow,AThen);
-  Seconds := SecondsBetween(ANow,AThen);
-  Minutes := MinutesBetween(ANow,AThen);
-  Hours := HoursBetween(ANow,AThen);
+  MilliSeconds := MilliSecondsBetween(ANow, AThen);
+  Seconds := SecondsBetween(ANow, AThen);
+  Minutes := MinutesBetween(ANow, AThen);
+  Hours := HoursBetween(ANow, AThen);
 
-  Days := DaysBetween(ANow,AThen);
-  Years := YearsBetween(ANow,AThen);
-  Months := MonthsBetween(ANow,AThen);
+  Days := DaysBetween(ANow, AThen);
+  Years := YearsBetween(ANow, AThen);
+  Months := MonthsBetween(ANow, AThen);
 
   MilliSecondsTM := MilliSeconds - Seconds * 1000;
   SecondsTM := Seconds - Minutes * 60;
   MinutesTM := Seconds div 60;
   HoursTM := Hours - Hours div 24;
 
-  DaysTM := nuSTR.GetDaysBetweenDates(ANow,AThen);
+  DaysTM := nuSTR.GetDaysBetweenDates(ANow, AThen);
   MonthsTM := Months - Years * 12;
   YearsTM := Years;
 end;
@@ -369,21 +360,21 @@ end;
 function TUmIntervalBetween.CalcAsTimer(ADateFormat, ATimeFormat:string):string;
 begin
   TimePart := ATimeFormat;
-  TimePart := stringReplace(TimePart,'zzz',AddZeroes(MilliSecondsTM,3),[rfReplaceAll,rfIgnoreCase]);
-  TimePart := stringReplace(TimePart,'ss',AddZeroes(SecondsTM,2),[rfReplaceAll,rfIgnoreCase]);
-  TimePart := stringReplace(TimePart,'nn',AddZeroes(MinutesTM,2),[rfReplaceAll,rfIgnoreCase]);
-  TimePart := stringReplace(TimePart,'hh',AddZeroes(HoursTM,2),[rfReplaceAll,rfIgnoreCase]);
+  TimePart := stringReplace(TimePart, 'zzz', AddZeroes(MilliSecondsTM, 3), [rfReplaceAll, rfIgnoreCase]);
+  TimePart := stringReplace(TimePart, 'ss', AddZeroes(SecondsTM, 2), [rfReplaceAll, rfIgnoreCase]);
+  TimePart := stringReplace(TimePart, 'nn', AddZeroes(MinutesTM, 2), [rfReplaceAll, rfIgnoreCase]);
+  TimePart := stringReplace(TimePart, 'hh', AddZeroes(HoursTM, 2), [rfReplaceAll, rfIgnoreCase]);
 
   DatePart := ADateFormat;
-  DatePart := stringReplace(DatePart,'mmmm',AddZeroes(MonthsTM,2),[rfReplaceAll,rfIgnoreCase]);
-  DatePart := stringReplace(DatePart,'mmm',AddZeroes(MonthsTM,2),[rfReplaceAll,rfIgnoreCase]);
-  DatePart := stringReplace(DatePart,'mm',AddZeroes(MonthsTM,2),[rfReplaceAll,rfIgnoreCase]);
+  DatePart := stringReplace(DatePart, 'mmmm', AddZeroes(MonthsTM, 2), [rfReplaceAll, rfIgnoreCase]);
+  DatePart := stringReplace(DatePart, 'mmm', AddZeroes(MonthsTM, 2), [rfReplaceAll, rfIgnoreCase]);
+  DatePart := stringReplace(DatePart, 'mm', AddZeroes(MonthsTM, 2), [rfReplaceAll, rfIgnoreCase]);
 
-  DatePart := stringReplace(DatePart,'ddd',AddZeroes(DaysTM,2),[rfReplaceAll,rfIgnoreCase]);
-  DatePart := stringReplace(DatePart,'dd',AddZeroes(DaysTM,2),[rfReplaceAll,rfIgnoreCase]);
-  DatePart := stringReplace(DatePart,'d',AddZeroes(DaysTM,2),[rfReplaceAll,rfIgnoreCase]);
+  DatePart := stringReplace(DatePart, 'ddd', AddZeroes(DaysTM, 2), [rfReplaceAll, rfIgnoreCase]);
+  DatePart := stringReplace(DatePart, 'dd', AddZeroes(DaysTM, 2), [rfReplaceAll, rfIgnoreCase]);
+  DatePart := stringReplace(DatePart, 'd', AddZeroes(DaysTM, 2), [rfReplaceAll, rfIgnoreCase]);
 
-  DatePart := stringReplace(DatePart,'yyyy',AddZeroes(YearsTM,4),[rfReplaceAll,rfIgnoreCase]);
+  DatePart := stringReplace(DatePart, 'yyyy', AddZeroes(YearsTM, 4), [rfReplaceAll, rfIgnoreCase]);
 end;
 
 // Возврат интервала между датами и временем
@@ -425,9 +416,9 @@ begin
     TimerProcess := TimerNow-TimerStart;
   end;
 
-  ProcessInterval.CalcBetween(TimerNow,TimerStart);
-  TimerProcessTXT := FormatDateTime(TimeFormat,TimerProcess);
-  TimerProcessMilisecTXT := FormatDateTime('zzz',TimerProcess);
+  ProcessInterval.CalcBetween(TimerNow, TimerStart);
+  TimerProcessTXT := FormatDateTime(TimeFormat, TimerProcess);
+  TimerProcessMilisecTXT := FormatDateTime('zzz', TimerProcess);
   DateProcessTXT := GetIntervalDatePrefix(ProcessInterval);
 
   ProcessSession;
@@ -437,10 +428,10 @@ end;
 // Процессинг нон-стоп таймера
 Procedure TumTimer.ProcessNonstop;
 begin
-  TimerNonstop := TimerNow-TimerCreated;
+  TimerNonstop := TimerNow - TimerCreated;
 
-  NonstopInterval.CalcBetween(TimerNow,TimerContinued);
-  TimerNonstopTXT := FormatDateTime(TimeFormat,TimerNonstop);
+  NonstopInterval.CalcBetween(TimerNow, TimerContinued);
+  TimerNonstopTXT := FormatDateTime(TimeFormat, TimerNonstop);
   DateNonstopTXT := GetIntervalDatePrefix(NonstopInterval);
 end;
 
@@ -449,8 +440,8 @@ Procedure TumTimer.ProcessSession;
 begin
   TimerSession := TimerNow - TimerContinued;
 
-  SessionInterval.CalcBetween(TimerNow,TimerContinued);
-  TimerSessionTXT := FormatDateTime(TimeFormat,TimerSession);
+  SessionInterval.CalcBetween(TimerNow, TimerContinued);
+  TimerSessionTXT := FormatDateTime(TimeFormat, TimerSession);
   DateSessionTXT := GetIntervalDatePrefix(SessionInterval);
 end;
 
@@ -458,7 +449,7 @@ end;
 function TumTimer.TimerGetStop: String;
 begin
   TimerStop := UnivDateTime2LocalDateTime(DateTime2UnivDateTime(Now));
-  TimerStopTXT := FormatDateTime(TimeFormat,TimerStop);
+  TimerStopTXT := FormatDateTime(TimeFormat, TimerStop);
   DateStopTXT := GetDatePrefix(TimerStop);
 
   result := TimerStopTXT;
@@ -482,8 +473,13 @@ begin
     y := FormatDateTime('yyyy',ATimer);
   end;
 
-  if DateFormatOrder = 1 then Result := d + DateDevider + m + DateDevider + y else
-  if DateFormatOrder = 2 then Result := m + DateDevider + d + DateDevider + y else Result := '';
+  if DateFormatOrder = 1 then
+    Result := d + DateDevider + m + DateDevider + y
+  else
+    if DateFormatOrder = 2 then
+      Result := m + DateDevider + d + DateDevider + y
+    else
+      Result := '';
 end;
 
 // Запуск таймера и фиксирование параметров
@@ -493,17 +489,17 @@ begin
   TimerNow := UnivDateTime2LocalDateTime(DateTime2UnivDateTime(Now));
 
   TimerCreated := TimerNow;
-  TimerCreatedTXT := FormatDateTime(TimeFormat,TimerCreated);
+  TimerCreatedTXT := FormatDateTime(TimeFormat, TimerCreated);
   DateCreatedTXT := GetDatePrefix(TimerCreated);
 
   TimerStart := TimerNow;
   TimerStop := TimerStart;
   TimerContinued := TimerStart;
 
-  TimerStartTXT := FormatDateTime(TimeFormat,TimerStart);
+  TimerStartTXT := FormatDateTime(TimeFormat, TimerStart);
   DateStartTXT := GetDatePrefix(TimerStart);
 
-  TimerStopTXT := FormatDateTime(TimeFormat,TimerStop);
+  TimerStopTXT := FormatDateTime(TimeFormat, TimerStop);
   DateStopTXT := GetDatePrefix(TimerStop);
 
   Process;
@@ -517,7 +513,8 @@ var
 begin
   tmpList := TStringList.Create;
 
-  for i := 0 to TimerList.Count-1 do tmpList.add(TimerList[TimerList.Count - i - 1]);
+  for i := 0 to TimerList.Count-1 do
+    tmpList.add(TimerList[TimerList.Count - i - 1]);
 
   TimerList.Text := tmpList.Text;
   FreeAndNil(tmpList);
@@ -530,15 +527,19 @@ var
   Postfix: string;
 begin
   if TimerList.Count = 0
-    then Postfix := FormatDateTime(TimeFormat,0)
+    then Postfix := FormatDateTime(TimeFormat, 0)
     else Postfix := TimerSessionTXT;
 
-  if AddingTimerMode = 0 then AddTimer := TimerProcessTXT else
-  if AddingTimerMode = 1 then AddTimer := TimerProcessTXT + '    ( + ' + Postfix + ' )';
+  if AddingTimerMode = 0 then
+    AddTimer := TimerProcessTXT
+  else
+    if AddingTimerMode = 1 then
+      AddTimer := TimerProcessTXT + '    ( + ' + Postfix + ' )';
 
-  if AddTimersToEnd
-    then TimerList.Add('Finish   ░ ' + AddZeroes(TimerList.Count+1,2) +' ░    ' + AddTimer)
-    else TimerList.Insert(0,'Finish   ░ ' + AddZeroes(TimerList.Count+1,2) +' ░    ' + AddTimer);
+  if AddTimersToEnd then
+    TimerList.Add('Finish   ░ ' + AddZeroes(TimerList.Count + 1, 2) +' ░    ' + AddTimer)
+  else
+    TimerList.Insert(0,'Finish   ░ ' + AddZeroes(TimerList.Count + 1, 2) +' ░    ' + AddTimer);
 
   TimerContinued := TimerNow;
   Process;
@@ -560,11 +561,11 @@ begin
   TimerNow := UnivDateTime2LocalDateTime(DateTime2UnivDateTime(Now));
   if not isNonStop  then
   begin
-    TimerStart := TimerNow-(TimerStop-TimerStart);
+    TimerStart := TimerNow - (TimerStop - TimerStart);
   end;
   TimerContinued := TimerNow;
 
-  TimerStartTXT := FormatDateTime(TimeFormat,TimerStart);
+  TimerStartTXT := FormatDateTime(TimeFormat, TimerStart);
   DateStartTXT := GetDatePrefix(TimerStart);
 
   Process;
@@ -603,7 +604,8 @@ end;
 Function AddZeroes(Num:Integer; Count:Byte): String;
 Begin
   Result := IntToStr(Num);
-  While Length(Result)<count Do Result := '0'+Result;
+  While Length(Result) < count Do
+    Result := '0' + Result;
 End;
 
 initialization
